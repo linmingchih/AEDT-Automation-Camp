@@ -10,4 +10,4 @@ if dialog.ShowDialog() == DialogResult.OK:
     txt_path = dialog.FileName
     AddWarningMessage(txt_path)
 else:
-    sys.exit()
+    pass
