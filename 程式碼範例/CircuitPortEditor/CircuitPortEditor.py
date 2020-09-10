@@ -113,7 +113,11 @@ class MyWindow(Window):
                         "NAME:elements", 
                         i[0]
                     ])
-                port_name = "{}.{}.{}".format(self.component_cb.SelectedValue, i[0], i[1])
+                if self.component_cb.SelectedValue in i[0]:
+                    port_name = i[0].replace('-','.') + '.' + i[1]
+                else:
+                    port_name = "{}.{}.{}".format(self.component_cb.SelectedValue, i[0], i[1])
+                AddWarningMessage(port_name)    
                 oEditor.AddPinGroupRefPort([port_name], [self.reference_cb.SelectedValue])                
         
         else:
