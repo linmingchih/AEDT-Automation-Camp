@@ -18,20 +18,113 @@ oDesign = oProject.GetActiveDesign()
 oEditor = oDesign.GetActiveEditor()
 oDesktop.ClearMessages("", "", 2)
 #Functions---------------------------------------------------------------------|
+def switch(bw_name):
+    unit = 	oEditor.GetActiveUnits()
+    start_layer = oEditor.GetPropertyValue("BaseElementTab", bw_name, 'Start Layer')
+    end_layer = oEditor.GetPropertyValue("BaseElementTab", bw_name, 'End Layer')
+    pt0 = oEditor.GetPropertyValue("BaseElementTab", bw_name, 'Pt0').split(',')
+    pt1 = oEditor.GetPropertyValue("BaseElementTab", bw_name, 'Pt1').split(',')
+    
+    try:
+        oEditor.ChangeProperty(
+            [
+                "NAME:AllTabs",
+                [
+                    "NAME:BaseElementTab",
+                    [
+                        "NAME:PropServers", 
+                        bw_name
+                    ],
+                    [
+                        "NAME:ChangedProps",
+                        [
+                            "NAME:Start Layer",
+                            "Value:="		, end_layer
+                        ]
+                    ]
+                ]
+            ])
+        oEditor.ChangeProperty(
+            [
+                "NAME:AllTabs",
+                [
+                    "NAME:BaseElementTab",
+                    [
+                        "NAME:PropServers", 
+                        bw_name
+                    ],
+                    [
+                        "NAME:ChangedProps",
+                        [
+                            "NAME:End Layer",
+                            "Value:="		, start_layer
+                        ]
+                    ]
+                ]
+            ])
+        oEditor.ChangeProperty(
+            [
+                "NAME:AllTabs",
+                [
+                    "NAME:BaseElementTab",
+                    [
+                        "NAME:PropServers", 
+                        bw_name
+                    ],
+                    [
+                        "NAME:ChangedProps",
+                        [
+                            "NAME:Pt0",
+                            "X:="			, "{}{}".format(pt1[0], unit),
+                            "Y:="			, "{}{}".format(pt1[1], unit)
+                        ]
+                    ]
+                ]
+            ])
+        oEditor.ChangeProperty(
+            [
+                "NAME:AllTabs",
+                [
+                    "NAME:BaseElementTab",
+                    [
+                        "NAME:PropServers", 
+                        bw_name
+                    ],
+                    [
+                        "NAME:ChangedProps",
+                        [
+                            "NAME:Pt1",
+                            "X:="			, "{}{}".format(pt0[0], unit),
+                            "Y:="			, "{}{}".format(pt0[1], unit)
+                        ]
+                    ]
+                ]
+            ])
+        AddWarningMessage('{} is switched!'.format(bw_name))
+    except:
+        AddWarningMessage('{} failed in switching!'.format(bw_name))
+
+
+
+
 def change(bondwire_name, direction, distance):
     pt0 = oEditor.GetPropertyValue("BaseElementTab", bondwire_name, 'pt0')
     pt1 = oEditor.GetPropertyValue("BaseElementTab", bondwire_name, 'pt1')
     x0, y0 = map(float, pt0.strip().split(','))
     x1, y1 = map(float, pt1.strip().split(','))
-    if direction == 'x':
+    if direction == "Move in x":
         x, y = x1 + distance, y1
     
-    elif direction == 'y':
+    elif direction == "Move in y":
         x, y = x1, y1 + distance
     
-    elif direction == 'along':
+    elif direction == "Move along":
         length = math.sqrt((x1-x0)**2+(y1-y0)**2)
         x, y = x1 + distance*(x1-x0)/(length), y1 + distance*(y1-y0)/(length)
+    
+    elif direction == "Switch Pts":
+        switch(bondwire_name)
+        return None
     
     else:
         pass
@@ -83,7 +176,8 @@ class MyWindow(Window):
             self.profile_cb.Items.Add(i)
 
     def Button_Click(self, sender, e):
-        for i in oEditor.GetSelections():
+        selected = oEditor.GetSelections()
+        for i in selected:
             change(i, self.direction_cb.Text, float(self.dist_tb.Text))
         
         data = {'direction': self.direction_cb.Text, 
@@ -91,7 +185,7 @@ class MyWindow(Window):
         with open('movebw.json', 'w') as f:
             json.dump(data, f, indent=4)
             
-        self.Close()
+        oEditor.Select(selected)
         
     def profile_cb_SelectionChanged(self, sender, e):
         AddWarningMessage(str(self.profiles[self.profile_cb.SelectedValue]))
