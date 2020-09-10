@@ -8,7 +8,7 @@ sys.path.append(dll_dir)
 clr.AddReference('IronPython.Wpf')
 
 import wpf
-from System.Windows import Window
+from System.Windows import Window, Visibility
 from System.Windows.Controls import ListBoxItem
 from System.Windows.Forms import OpenFileDialog, SaveFileDialog, DialogResult, FolderBrowserDialog
 os.chdir(os.path.dirname(__file__))
@@ -160,6 +160,52 @@ def getProfile():
     
     return profile   
 #GUI---------------------------------------------------------------------------|
+
+class MyWindow(Window):
+    def __init__(self):
+        wpf.LoadComponent(self, 'MoveBondWire.xaml')
+
+        try:
+            with open('movebw.json') as f:
+                data = json.load(f)
+            self.direction_cb.Text = data['direction']
+            self.dist_tb.Text = data['dist']
+        except:
+            pass
+        
+        self.profiles = getProfile()
+        for i in self.profiles:
+            self.profile_cb.Items.Add(i)        
+
+    def direction_cb_SelectionChanged(self, sender, e):
+        if self.direction_cb.SelectedItem.Content == 'Switch Pts':
+            self.dist_tb.Visibility =  Visibility.Hidden
+            self.move_bt.Content = 'Switch'
+        else:
+            self.dist_tb.Visibility =  Visibility.Visible
+            self.move_bt.Content = 'Move'            
+    
+    def dist_tb_TextChanged(self, sender, e):
+        pass
+
+    
+    def move_bt_Click(self, sender, e):
+        selected = oEditor.GetSelections()
+        for i in selected:
+            change(i, self.direction_cb.Text, float(self.dist_tb.Text))
+        
+        data = {'direction': self.direction_cb.Text, 
+                'dist': self.dist_tb.Text}
+        with open('movebw.json', 'w') as f:
+            json.dump(data, f, indent=4)
+            
+        oEditor.Select(selected)
+
+    
+    def profile_cb_SelectionChanged(self, sender, e):
+        AddWarningMessage(str(self.profiles[self.profile_cb.SelectedValue]))
+        oEditor.Select(self.profiles[self.profile_cb.SelectedValue])
+'''
 class MyWindow(Window):
     def __init__(self):
         wpf.LoadComponent(self, 'moveBondwire.xaml')
@@ -191,6 +237,10 @@ class MyWindow(Window):
         AddWarningMessage(str(self.profiles[self.profile_cb.SelectedValue]))
         oEditor.Select(self.profiles[self.profile_cb.SelectedValue])
 
+    def direction_cb_SelectionChanged(self, sender, e):
+        if self.direction_cb.SelectedValue == "Switch Pts":
+            self.dist_tb.IsEnabled= False
+'''            
 #Code End----------------------------------------------------------------------|       
 MyWindow().ShowDialog()
 
